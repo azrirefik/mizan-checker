@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mizan - Quran Text Validator</title>
+<meta property="og:title" content="Mizan - Quran Text Validator">
+<meta property="og:description" content="Verify if Arabic text is an authentic Quranic verse. Works with diacritics, simplified spelling, and LLM output.">
+<meta name="twitter:card" content="summary">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: oklch(98% 0.004 95); --surface: oklch(100% 0.002 95);
+  --fg: oklch(20% 0.018 70); --muted: oklch(48% 0.012 70);
+  --border: oklch(90% 0.006 95); --border-2: oklch(82% 0.010 80);
+  --accent: oklch(48% 0.09 172); --accent-fg: oklch(98% 0.004 95);
+  --accent-soft: oklch(48% 0.09 172 / 10%);
+  --ok: oklch(42% 0.09 152); --ok-soft: oklch(42% 0.09 152 / 10%);
+  --warn: oklch(55% 0.10 70); --warn-soft: oklch(55% 0.10 70 / 12%);
+  --danger: oklch(48% 0.13 28); --danger-soft: oklch(48% 0.13 28 / 10%);
+  --font-display: 'Iowan Old Style','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;
+  --font-arabic: 'Scheherazade New','Amiri',serif;
+  --font-mono: ui-monospace,'JetBrains Mono',Menlo,monospace;
+  --maxw: 1120px; --r: 4px; --r-lg: 6px;
+}
+*,*::before,*::after{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.15;letter-spacing:-0.01em;margin:0}
+p{margin:0} a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;cursor:pointer} ::selection{background:var(--accent-soft)}
+
+.site{border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20}
+.site-inner{max-width:var(--maxw);margin:0 auto;padding:14px clamp(16px,4vw,32px);display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--fg)}
+.brand:hover{text-decoration:none}
+.brand-mark{width:26px;height:26px;flex:0 0 auto;color:var(--accent)}
+.brand-name{font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em}
+.brand-name .ar{font-family:var(--font-arabic);font-size:23px;color:var(--muted);margin-left:7px;font-weight:400}
+.nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.nav a{color:var(--muted);font-size:14px;padding:8px 12px;border-radius:var(--r);text-decoration:none}
+.nav a:hover{color:var(--fg);background:var(--accent-soft)}
+.nav a.active{color:var(--fg)}
+.nav .icon-btn{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--r);color:var(--muted);background:var(--surface);margin-left:6px}
+.nav .icon-btn:hover{color:var(--fg);border-color:var(--border-2)}
+
+.intro{max-width:var(--maxw);margin:0 auto;padding:clamp(40px,7vw,72px) clamp(16px,4vw,32px) clamp(20px,3vw,32px)}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--accent)}
+.intro h1{font-size:clamp(30px,5vw,46px);max-width:18ch;letter-spacing:-0.02em}
+.intro .lede{margin-top:14px;max-width:52ch;color:var(--muted);font-size:clamp(15px,1.6vw,17px)}
+
+.validator{max-width:var(--maxw);margin:0 auto;padding:0 clamp(16px,4vw,32px) 24px}
+.input-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:clamp(16px,2.4vw,22px)}
+.field-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:12px}
+.field-head label{font-size:13px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em}
+.field-head .dir{font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+textarea#input{width:100%;min-height:148px;resize:vertical;font-family:var(--font-arabic);font-size:26px;line-height:1.9;direction:rtl;text-align:right;color:var(--fg);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;outline:none;transition:border-color .15s,box-shadow .15s}
+textarea#input::placeholder{color:var(--border-2);font-size:22px}
+textarea#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.actions{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;padding:11px 18px;border-radius:var(--r);border:1px solid transparent;transition:background .15s,border-color .15s,color .15s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{background:oklch(43% 0.09 172)}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--muted)}
+.btn.ghost:hover{color:var(--fg);border-color:var(--border-2)}
+.btn.sm{padding:8px 14px;font-size:13px}
+.meta-line{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+.examples{margin-top:clamp(28px,4vw,40px)}
+.section-label{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border)}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.ex{text-align:right;direction:rtl;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px 16px;cursor:pointer;transition:border-color .15s,transform .15s;display:flex;flex-direction:column;gap:14px}
+.ex:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ex .verse{font-family:var(--font-arabic);font-size:21px;line-height:1.7;color:var(--fg)}
+.ex .ref{direction:ltr;text-align:left;display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-top:1px solid var(--border);padding-top:12px}
+.ex .ref .where{font-family:var(--font-display);font-size:14px;color:var(--muted)}
+.ex .ref .where b{color:var(--fg);font-weight:600}
+.ex .ref .try{font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.ex:hover .ref .try{color:var(--accent)}
+
+.results{margin-top:clamp(28px,4vw,40px)}
+.empty{border:1px solid var(--border);border-radius:var(--r-lg);padding:clamp(40px,7vw,72px) 24px;text-align:center}
+.empty .mark{width:54px;height:54px;color:var(--accent);opacity:.55;margin:0 auto 22px}
+.empty h2{font-size:clamp(20px,2.6vw,26px);color:var(--fg)}
+.empty p{margin-top:10px;color:var(--muted);max-width:46ch;margin-inline:auto;font-size:15px}
+
+.result{display:flex;flex-direction:column;gap:16px}
+.block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:clamp(18px,2.4vw,24px)}
+.block .kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+
+.status{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.status .badge{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:clamp(20px,2.6vw,26px);font-weight:600;padding:10px 16px;border-radius:var(--r);letter-spacing:-0.01em}
+.status .badge .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.status .badge.ok{color:var(--ok);background:var(--ok-soft)} .status .badge.ok .dot{background:var(--ok)}
+.status .badge.warn{color:var(--warn);background:var(--warn-soft)} .status .badge.warn .dot{background:var(--warn)}
+.status .badge.danger{color:var(--danger);background:var(--danger-soft)} .status .badge.danger .dot{background:var(--danger)}
+.status .summary{color:var(--muted);font-size:15px;flex:1;min-width:220px}
+
+.reference{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.reference .where{font-family:var(--font-display);font-size:clamp(26px,4vw,38px);font-weight:600;letter-spacing:-0.02em}
+.reference .where .num{color:var(--accent)}
+.reference .surah-ar{font-family:var(--font-arabic);font-size:30px;color:var(--muted);direction:rtl}
+.reference .meta{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+.verse-frame{direction:rtl;text-align:center;border:1px solid var(--border);border-radius:var(--r);padding:clamp(22px,3.4vw,34px) clamp(18px,3vw,28px);background:var(--bg);position:relative}
+.verse-frame .text{font-family:var(--font-arabic);font-size:clamp(26px,3.6vw,34px);line-height:2;color:var(--fg);font-weight:400}
+.verse-frame .end-mark{display:inline-block;width:10px;height:10px;border:1px solid var(--accent);transform:rotate(45deg);margin:0 6px;vertical-align:middle;opacity:.7}
+
+.corr{display:grid;gap:14px}
+.corr-prepended{font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;color:var(--muted);padding:8px 12px;background:var(--bg);border-left:2px solid var(--accent);border-radius:var(--r)}
+.corr-prepended .ar{font-family:var(--font-arabic);font-size:18px;color:var(--fg);margin-left:8px;direction:rtl;display:inline-block}
+.corr-row{display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:12px}
+.corr-row .col{min-width:0}
+.corr-row .col .lab{font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.corr-row .col .txt{font-family:var(--font-arabic);font-size:22px;line-height:1.8;direction:rtl;text-align:right;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg)}
+.corr-row .col.after .txt{border-color:var(--accent);background:var(--accent-soft)}
+.corr-row .arrow{color:var(--accent);text-align:center;font-family:var(--font-mono);font-size:18px}
+
+.words{display:flex;flex-direction:column;border-top:1px solid var(--border)}
+.word{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:13px 2px;border-bottom:1px solid var(--border)}
+.word .w{font-family:var(--font-arabic);font-size:24px;direction:rtl;text-align:right}
+.word .tag{font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap}
+.word .tag.ok{color:var(--ok);background:var(--ok-soft)}
+.word .tag.warn{color:var(--warn);background:var(--warn-soft)}
+.word .tag.danger{color:var(--danger);background:var(--danger-soft)}
+
+.share{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px clamp(18px,2.4vw,24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg)}
+.share .lab{font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-right:auto}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: no-preference){
+  .block{animation:fadeUp .5s cubic-bezier(.2,.7,.3,1) both}
+  .result .block:nth-child(2){animation-delay:.05s}
+  .result .block:nth-child(3){animation-delay:.10s}
+  .result .block:nth-child(4){animation-delay:.15s}
+  .result .block:nth-child(5){animation-delay:.20s}
+  .result .share{animation:fadeUp .5s cubic-bezier(.2,.7,.3,1) .25s both}
+}
+
+.scrim{position:fixed;inset:0;background:oklch(20% 0.018 70 / 30%);opacity:0;pointer-events:none;transition:opacity .25s;z-index:30}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.7,.3,1);z-index:31;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer-head h3{font-size:18px}
+.drawer-head .close{margin-left:auto;width:32px;height:32px;border:1px solid var(--border);border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);background:var(--surface)}
+.drawer-head .close:hover{color:var(--fg)}
+.drawer-body{overflow:auto;padding:8px 12px 20px;flex:1}
+.h-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:var(--r);cursor:pointer;border:1px solid transparent}
+.h-item:hover{background:var(--accent-soft);border-color:var(--border)}
+.h-item .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.h-item .dot.ok{background:var(--ok)} .h-item .dot.warn{background:var(--warn)} .h-item .dot.danger{background:var(--danger)}
+.h-item .body{min-width:0;flex:1}
+.h-item .href{font-family:var(--font-display);font-size:15px;color:var(--fg)}
+.h-item .snip{font-family:var(--font-arabic);font-size:17px;color:var(--muted);direction:rtl;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-item .when{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.h-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+.drawer-foot{padding:14px 20px;border-top:1px solid var(--border)}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,12px);background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;padding:10px 16px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.foot{max-width:var(--maxw);margin:48px auto 0;padding:28px clamp(16px,4vw,32px);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.foot a{color:var(--muted)} .foot a:hover{color:var(--fg)}
+.foot .sep{color:var(--border-2)}
+.foot .right{margin-left:auto;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em}
+
+@media (max-width: 720px){
+  .site-inner{flex-wrap:wrap;gap:10px;padding:12px clamp(14px,4vw,20px)}
+  .nav{gap:2px} .nav a{padding:8px 8px;font-size:13px}
+  .corr-row{grid-template-columns:1fr;gap:6px} .corr-row .arrow{display:none}
+  .word{grid-template-columns:1fr auto}
+  .reference .meta{margin-left:0;width:100%;margin-top:2px}
+  textarea#input{font-size:23px}
+}
+@media (max-width:420px){.brand-name .ar{display:none}}
+</style>
+</head>
+<body>
+
+<header class="site">
+<div class="site-inner">
+  <a class="brand" href="index.html" aria-label="Mizan home">
+    <svg class="brand-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="3"/>
+      <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="3" transform="rotate(45 50 50)"/>
+    </svg>
+    <span class="brand-name">Mizan<span class="ar">ميزان</span></span>
+  </a>
+  <nav class="nav">
+    <a class="active" href="index.html">Validator</a>
+    <a href="methodology.html">Methodology</a>
+    <a href="about.html">About</a>
+    <button class="icon-btn" id="hist-btn" aria-label="Recent checks" title="Recent checks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+    </button>
+  </nav>
+</div>
+</header>
+
+<section class="intro">
+  <div class="eyebrow">Validator</div>
+  <h1>Verify an Arabic verse is truly from the Quran.</h1>
+  <p class="lede">Paste a passage and Mizan checks it against the authentic Uthmani text, flagging fabricated wording, identifying the surah and ayah, and restoring correct spelling where a simplified form was used.</p>
+</section>
+
+<main class="validator">
+  <div class="input-card">
+    <div class="field-head">
+      <label for="input">Arabic text to check</label>
+      <span class="dir">RTL · Scheherazade New</span>
+    </div>
+    <textarea id="input" dir="rtl" lang="ar" placeholder="ألصق النص العربي هنا…" spellcheck="false" autocomplete="off"></textarea>
+    <div class="actions">
+      <button class="btn primary" id="validate-btn" onclick="validate()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        Validate
+      </button>
+      <button class="btn ghost" id="clear-btn" onclick="clearAll()">Clear</button>
+      <span class="meta-line" id="meta-line">Ready</span>
+    </div>
+  </div>
+
+  <div class="examples">
+    <div class="section-label">Try an example</div>
+    <div class="ex-grid" id="ex-grid"></div>
+  </div>
+
+  <div class="results" id="results" aria-live="polite">
+    <div class="empty">
+      <svg class="mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="2.5"/>
+        <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="2.5" transform="rotate(45 50 50)"/>
+      </svg>
+      <h2>Awaiting a verse</h2>
+      <p>Paste Arabic text above, or choose one of the examples to see how Mizan reads a result, from authenticity down to each word.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Mizan, a Quran text validation tool.</span>
+  <span class="sep">·</span>
+  <a href="methodology.html">Methodology</a>
+  <a href="about.html">About &amp; data</a>
+  <span class="right">Uthmani text · Tanzil</span>
+</footer>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h3>Recent checks</h3>
+    <button class="close" aria-label="Close" onclick="closeDrawer()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-foot">
+    <button class="btn ghost sm" onclick="clearHistory()">Clear history</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+let verseMap = null, versesData = null, corpus = null, surahData = null, verseKeys = null, loading = false;
+
+function normKey(text) {
+  let s = text.normalize('NFKD');
+  s = s.replace(/[\u200c\u200d\u200e\u200f\u061c]/g, '');
+  s = s.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+  s = s.replace(/[أإآٱ]/g, 'ا');
+  s = s.replace(/ى/g, 'ي');
+  s = s.replace(/ة/g, 'ه');
+  s = s.replace(/ؤ/g, 'و');
+  s = s.replace(/ئ/g, 'ي');
+  s = s.replace(/[\u0640\u06E5\u06E6]/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+function exactKey(text) {
+  let s = text.normalize('NFKD');
+  s = s.replace(/[\u200c\u200d\u200e\u200f\u061c]/g, '');
+  s = s.replace(/\u0671/g, '\u0627');
+  s = s.replace(/\u0670/g, '');
+  s = s.replace(/[\u0640\u06E5\u06E6]/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+async function loadData() {
+  if (verseMap) return;
+  if (loading) return;
+  loading = true;
+  $('#meta-line').textContent = 'Loading...';
+  try {
+    const [vres, sres] = await Promise.all([
+      fetch('quran-verses.min.json').then(r => r.json()),
+      fetch('https://raw.githubusercontent.com/azrirefik/mizan-checker/main/data/quran-surahs.min.json').then(r => r.json()).catch(() => null)
+    ]);
+    versesData = vres;
+    surahData = sres;
+    verseMap = new Map();
+    const parts = [];
+    for (const v of versesData) {
+      const key = normKey(v.text);
+      const arr = verseMap.get(key) || [];
+      arr.push(v);
+      verseMap.set(key, arr);
+      parts.push(key);
+    }
+    const bv = versesData.find(v => v.surah === 1 && v.ayah === 1);
+    if (bv) {
+      const basmala = bv.text;
+      for (const v of versesData) {
+        if (v.ayah === 1 && v.surah !== 1 && v.text.startsWith(basmala)) {
+          const stripped = v.text.slice(basmala.length).trim();
+          if (stripped) {
+            v.displayText = stripped;
+            const sk = normKey(stripped);
+            const arr = verseMap.get(sk) || [];
+            arr.push(v);
+            verseMap.set(sk, arr);
+          }
+        }
+      }
+    }
+    corpus = parts.join(' ');
+    verseKeys = versesData.map(v => [v, normKey(v.displayText || v.text)]);
+    $('#meta-line').textContent = `Loaded ${versesData.length} verses`;
+    loading = false;
+  } catch (e) {
+    $('#meta-line').textContent = 'Failed to load';
+    console.error(e);
+    loading = false;
+  }
+}
+
+function getSurahName(num) {
+  if (!surahData) return null;
+  return surahData.find(s => s.number === num) || null;
+}
+
+function $(s) { return document.querySelector(s); }
+
+function validate() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  const btn = $('#validate-btn');
+  btn.disabled = true;
+  btn.innerHTML = 'Checking...';
+  $('#meta-line').textContent = 'Validating...';
+  loadData().then(() => {
+    const lines = input.split(/\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Validate'; return; }
+    if (lines.length === 1) renderSingle(lines[0]);
+    else renderMulti(lines);
+    const encoded = btoa(unescape(encodeURIComponent(input)));
+    const url = new URL(window.location);
+    url.searchParams.set('q', encoded);
+    window.history.replaceState({}, '', url);
+    saveHistory(input);
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Validate';
+    $('#meta-line').textContent = `Loaded ${versesData.length} verses`;
+  });
+}
+
+function findPartialMatches(trimmedKey, limit = 3) {
+  if (!trimmedKey || trimmedKey.length < 2) return { refs: [], total: 0 };
+  const noSpace = trimmedKey.replace(/ /g, '');
+  const refs = [];
+  let total = 0;
+  for (const [v, verseKey] of verseKeys) {
+    const verseNoSpace = verseKey.replace(/ /g, '');
+    if (verseKey.includes(trimmedKey) || verseNoSpace.includes(noSpace)) {
+      total++;
+      if (refs.length < limit) refs.push(`${v.surah}:${v.ayah}`);
+    }
+  }
+  return { refs, total };
+}
+
+function findMultiVerseMatch(trimmedKey) {
+  const words = trimmedKey.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return { segments: [], unmatched: [] };
+  const wordCharLens = words.map(w => w.length);
+  const cumulative = [0];
+  for (const cl of wordCharLens) cumulative.push(cumulative[cumulative.length - 1] + cl);
+  const totalChars = cumulative[cumulative.length - 1];
+  const noSpace = trimmedKey.replace(/ /g, '');
+  const segments = [];
+  const unmatched = [];
+  let pos = 0;
+  const verseWordLists = verseKeys.map(([v, vk]) => [v, vk.split(/\s+/).filter(Boolean)]);
+  while (pos < totalChars) {
+    const wordIdx = cumulative.findIndex((c, i) => i > 0 && c > pos);
+    let bestV = null;
+    let bestMatchChars = 0;
+    for (const [v, vw] of verseWordLists) {
+      if (vw.length === 0) continue;
+      const vNoSpace = vw.join('');
+      if (pos + vNoSpace.length > totalChars) continue;
+      if (noSpace.slice(pos, pos + vNoSpace.length) === vNoSpace) {
+        if (vNoSpace.length > bestMatchChars) {
+          bestMatchChars = vNoSpace.length;
+          bestV = v;
+        }
+      }
+    }
+    if (bestV && bestMatchChars > 0) {
+      const display = bestV.displayText || bestV.text;
+      segments.push({ reference: `${bestV.surah}:${bestV.ayah}`, surah: bestV.surah, ayah: bestV.ayah, matched_text: display });
+      pos += bestMatchChars;
+    } else {
+      unmatched.push(words[wordIdx]);
+      pos += wordCharLens[wordIdx];
+    }
+  }
+  return { segments, unmatched };
+}
+
+function renderSingle(text) {
+  const trimmed = text.trim();
+  if (!/[\u0600-\u06FF]/.test(trimmed)) {
+    document.getElementById('results').innerHTML = `<div class="empty"><h2>No Arabic text</h2><p>The input doesn't contain Arabic characters.</p></div>`;
+    return;
+  }
+  const key = normKey(trimmed);
+  const matches = verseMap.get(key);
+
+  if (matches && matches.length > 0) {
+    const verse = matches[0];
+    const displayText = verse.displayText || verse.text;
+    const isExact = exactKey(trimmed) === exactKey(displayText);
+    const surah = getSurahName(verse.surah);
+    document.getElementById('results').innerHTML = renderMatchResult(verse, trimmed, isExact, surah, matches);
+    return;
+  }
+
+  const partial = findPartialMatches(key);
+  if (partial.refs.length > 0) {
+    document.getElementById('results').innerHTML = renderPartialResult(trimmed, partial);
+    return;
+  }
+
+  const mv = findMultiVerseMatch(key);
+  if (mv.segments.length >= 2) {
+    const totalInputWords = key.split(/\s+/).filter(Boolean).length;
+    const matchedInputWords = totalInputWords - mv.unmatched.length;
+    if (matchedInputWords >= Math.max(3, totalInputWords * 0.5)) {
+      document.getElementById('results').innerHTML = renderMultiVerseResult(trimmed, mv);
+      return;
+    }
+  }
+
+  const fab = analyzeFabrication(trimmed);
+  document.getElementById('results').innerHTML = renderNotMatchResult(trimmed, fab);
+}
+
+function renderMatchResult(verse, input, isExact, surah, allMatches) {
+  const ref = `${verse.surah}:${verse.ayah}`;
+  const surahEn = surah ? surah.englishName : `Surah ${verse.surah}`;
+  const surahAr = surah ? surah.name : '';
+
+  let html = `<div class="result">`;
+
+  // Status block
+  const status = isExact ? 'ok' : 'warn';
+  const title = isExact ? 'Authentic verse' : 'Authentic, spelling restored';
+  const summary = isExact
+    ? 'An exact match against the Uthmani text. This is an authentic verse of the Quran.'
+    : 'This verse is authentic. The text you entered uses simplified or variant spelling; the canonical Uthmani form is shown below.';
+  html += `<div class="block"><div class="kicker">Result</div>
+    <div class="status"><span class="badge ${status}"><span class="dot"></span>${title}</span><p class="summary">${summary}</p></div></div>`;
+
+  // Reference block
+  html += `<div class="block"><div class="kicker">Reference</div>
+    <div class="reference"><span class="where">${surahEn} <span class="num">${ref}</span></span>`;
+  if (surahAr) html += `<span class="surah-ar">${surahAr}</span>`;
+  html += `<span class="meta">ayah ${verse.ayah} · surah ${verse.surah}</span></div></div>`;
+
+  // Verse block
+  const displayText = verse.displayText || verse.text;
+  html += `<div class="block"><div class="kicker">Uthmani text</div>
+    <div class="verse-frame"><div class="text">${esc(displayText)}<span class="end-mark" aria-hidden="true"></span></div></div></div>`;
+
+  // Corrections
+  if (!isExact) {
+    const wordsInput = input.split(/\s+/).filter(Boolean);
+    const wordsCanon = displayText.split(/\s+/).filter(Boolean);
+    // Find alignment offset: where does user input start in canonical?
+    let offset = 0;
+    for (let i = 0; i <= wordsCanon.length - wordsInput.length; i++) {
+      if (wordsCanon[i] === wordsInput[0]) {
+        offset = i;
+        break;
+      }
+    }
+    const prepended = wordsCanon.slice(0, offset);
+    const aligned = wordsCanon.slice(offset, offset + wordsInput.length);
+    html += `<div class="block"><div class="kicker">Spelling correction</div><div class="corr">`;
+    if (prepended.length > 0) {
+      html += `<div class="corr-prepended">Canonical prepended: <span class="ar">${esc(prepended.join(' '))}</span></div>`;
+    }
+    const len = Math.max(wordsInput.length, aligned.length);
+    for (let i = 0; i < len; i++) {
+      const bef = wordsInput[i] || '-';
+      const aft = aligned[i] || '-';
+      html += `<div class="corr-row">
+        <div class="col"><div class="lab">You entered</div><div class="txt">${esc(bef)}</div></div>
+        <div class="arrow">→</div>
+        <div class="col after"><div class="lab">Canonical</div><div class="txt">${esc(aft)}</div></div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // Also matches
+  if (allMatches.length > 1) {
+    html += `<div class="block"><div class="kicker">Also matches</div>
+      <p style="color:var(--muted);font-size:14px">${allMatches.slice(1, 4).map(v => `${v.surah}:${v.ayah}`).join(', ')}</p></div>`;
+  }
+
+  // Share
+  html += renderShare();
+  html += `</div>`;
+  return html;
+}
+
+function renderPartialResult(text, partial) {
+  const refList = partial.refs.map(r => `<span class="ref-pill">${r}</span>`).join(' ');
+  const moreCount = partial.total - partial.refs.length;
+  const more = moreCount > 0 ? ` <span class="more">and ${moreCount} more</span>` : '';
+  let html = `<div class="result">`;
+  html += `<div class="block"><div class="kicker">Result</div>
+    <div class="status"><span class="badge warn"><span class="dot"></span>Partial match</span><p class="summary">The text you entered is a substring of ${partial.total} verse${partial.total === 1 ? '' : 's'} in the Quran. ${partial.total === 1 ? 'This is the matching verse.' : 'Showing the first few below.'}</p></div></div>`;
+  html += `<div class="block"><div class="kicker">Entered text</div>
+    <div class="verse-frame"><div class="text">${esc(text)}</div></div></div>`;
+  html += `<div class="block"><div class="kicker">Found in</div>
+    <div class="partial-refs">${refList}${more}</div></div>`;
+  html += renderShare();
+  html += `</div>`;
+  return html;
+}
+
+function renderMultiVerseResult(text, mv) {
+  const allMatched = mv.unmatched.length === 0;
+  const status = allMatched ? 'ok' : 'warn';
+  const title = allMatched ? 'Multi-verse match' : 'Partial multi-verse match';
+  const summary = allMatched
+    ? `The text you entered covers ${mv.segments.length} consecutive verse${mv.segments.length === 1 ? '' : 's'} from the Quran.`
+    : `The text matches ${mv.segments.length} verse${mv.segments.length === 1 ? '' : 's'} with ${mv.unmatched.length} word${mv.unmatched.length === 1 ? '' : 's'} not found in the Quran.`;
+  let html = `<div class="result">`;
+  html += `<div class="block"><div class="kicker">Result</div>
+    <div class="status"><span class="badge ${status}"><span class="dot"></span>${title}</span><p class="summary">${summary}</p></div></div>`;
+  html += `<div class="block"><div class="kicker">Entered text</div>
+    <div class="verse-frame"><div class="text">${esc(text)}</div></div></div>`;
+  html += `<div class="block"><div class="kicker">Verses matched</div><div class="mv-segments">`;
+  for (const seg of mv.segments) {
+    html += `<div class="mv-seg">
+      <div class="mv-ref">${seg.reference}</div>
+      <div class="mv-text">${esc(seg.matched_text)}</div>
+    </div>`;
+  }
+  html += `</div></div>`;
+  if (!allMatched) {
+    html += `<div class="block"><div class="kicker">Words not found in the Quran</div>
+      <div class="words">`;
+    for (const w of mv.unmatched) {
+      html += `<div class="word"><div class="w">${esc(w)}</div><div class="tag danger">No match</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+  html += renderShare();
+  html += `</div>`;
+  return html;
+}
+
+function renderNotMatchResult(text, fab) {
+  let html = `<div class="result">`;
+  html += `<div class="block"><div class="kicker">Result</div>
+    <div class="status"><span class="badge danger"><span class="dot"></span>Not found in the Quran</span><p class="summary">This exact sequence does not match any verse in the Uthmani corpus. The word-by-word analysis below distinguishes Quranic vocabulary from fabricated wording.</p></div></div>`;
+
+  html += `<div class="block"><div class="kicker">Entered text</div>
+    <div class="verse-frame"><div class="text">${esc(text)}</div></div></div>`;
+
+  if (fab.words.length > 0) {
+    html += `<div class="block"><div class="kicker">Word-by-word analysis</div><div class="words">`;
+    for (const w of fab.words) {
+      const state = w.isFabricated ? 'danger' : 'warn';
+      const tag = w.isFabricated ? 'No match' : 'Quranic word';
+      const note = w.isFabricated ? 'Does not occur in the Quran' : 'Found in the Quran, but not in this sequence';
+      html += `<div class="word">
+        <div class="w">${esc(w.word)}</div>
+        <div class="tag ${state}">${tag}</div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  html += renderShare();
+  html += `</div>`;
+  return html;
+}
+
+function renderShare() {
+  return `<div class="share"><span class="lab">Share this result</span>
+    <button class="btn ghost sm" onclick="copyLink()">Copy link</button>
+    <button class="btn ghost sm" onclick="copyText()">Copy as text</button></div>`;
+}
+
+function renderMulti(lines) {
+  let html = `<div class="result">`;
+  for (const line of lines) {
+    if (!/[\u0600-\u06FF]/.test(line)) continue;
+    const key = normKey(line.trim());
+    const matches = verseMap.get(key);
+    const status = matches ? (line.trim() === matches[0].text ? 'ok' : 'warn') : 'danger';
+    const title = matches ? `${matches[0].surah}:${matches[0].ayah}` : 'Not found';
+    html += `<div class="block">
+      <div class="status"><span class="badge ${status}"><span class="dot"></span>${title}</span>
+        <p class="summary" style="font-family:var(--font-arabic);font-size:18px;direction:rtl;text-align:right">${esc(line.trim().slice(0, 80))}</p>
+      </div></div>`;
+  }
+  html += renderShare();
+  html += `</div>`;
+  document.getElementById('results').innerHTML = html;
+}
+
+function analyzeFabrication(text) {
+  const key = normKey(text);
+  const words = key.split(/\s+/).filter(Boolean);
+  const results = [];
+  if (words.length === 0) return { words: [], stats: { totalWords: 0, fabricatedWords: 0, fabricatedRatio: 0 } };
+  let i = 0;
+  while (i < words.length) {
+    let lo = 1, hi = words.length - i, best = 0;
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (corpus.includes(words.slice(i, i + mid).join(' '))) { best = mid; lo = mid + 1; }
+      else { hi = mid - 1; }
+    }
+    if (best > 0) { for (let j = i; j < i + best; j++) results.push({ word: words[j], isFabricated: false }); i += best; }
+    else { results.push({ word: words[i], isFabricated: true }); i++; }
+  }
+  return { words: results, stats: null };
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('results').innerHTML = `<div class="empty">
+    <svg class="mark" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="2.5" transform="rotate(45 50 50)"/></svg>
+    <h2>Awaiting a verse</h2><p>Paste Arabic text above, or choose one of the examples to see how Mizan reads a result.</p></div>`;
+  const url = new URL(window.location); url.searchParams.delete('q'); window.history.replaceState({}, '', url);
+}
+
+function copyLink() { navigator.clipboard.writeText(window.location.href).then(() => showToast('Link copied')); }
+function copyText() {
+  const blocks = document.querySelectorAll('.block,.share');
+  let text = ''; blocks.forEach(b => { text += b.textContent.trim() + '\n\n'; });
+  navigator.clipboard.writeText(text.trim()).then(() => showToast('Results copied'));
+}
+function showToast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
+
+// History
+function saveHistory(input) {
+  const h = JSON.parse(localStorage.getItem('mizan_hist') || '[]');
+  h.unshift({ text: input, time: Date.now() });
+  if (h.length > 20) h.pop();
+  localStorage.setItem('mizan_hist', JSON.stringify(h));
+}
+function loadHistory() {
+  const h = JSON.parse(localStorage.getItem('mizan_hist') || '[]');
+  const el = $('#drawer-body');
+  if (h.length === 0) { el.className = 'h-empty'; el.textContent = 'No checks yet.'; return; }
+  el.className = '';
+  el.innerHTML = h.map(item => {
+    const d = new Date(item.time);
+    const dot = item.text.length > 20 ? 'warn' : 'ok';
+    return `<div class="h-item" onclick="loadFromHistory('${esc(item.text).replace(/'/g, "\\'")}')">
+      <span class="dot ${dot}"></span>
+      <div class="body"><div class="href">${item.text.length} char${item.text.length!==1?'s':''}</div>
+        <div class="snip">${esc(item.text.slice(0,60))}</div></div>
+      <span class="when">${d.toLocaleDateString()}</span></div>`;
+  }).join('');
+}
+function loadFromHistory(t) { document.getElementById('input').value = t; closeDrawer(); validate(); }
+function clearHistory() { localStorage.removeItem('mizan_hist'); loadHistory(); }
+function toggleDrawer() {
+  const open = $('#drawer').classList.toggle('open');
+  $('#scrim').classList.toggle('open');
+  if (open) loadHistory();
+}
+function closeDrawer() { $('#drawer').classList.remove('open'); $('#scrim').classList.remove('open'); }
+
+async function loadFromUrl() {
+  const q = new URLSearchParams(window.location.search).get('q');
+  if (!q) return;
+  try { document.getElementById('input').value = decodeURIComponent(escape(atob(q))); validate(); } catch (e) {}
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Examples
+const examples = [
+  { text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', ref: 'Al-Fatihah 1:1', hint: 'Exact' },
+  { text: 'قُلْ هُوَ اللَّهُ أَحَدٌ', ref: 'Al-Ikhlas 112:1', hint: 'Exact' },
+  { text: 'بسم الله الرحمن الرحيم', ref: 'Al-Fatihah 1:1 (simplified)', hint: 'Spelling restored' },
+  { text: 'ان الله غفور ودود', ref: 'Hallucinated phrase', hint: 'Not found' },
+];
+
+const exEl = $('#ex-grid');
+examples.forEach(ex => {
+  exEl.innerHTML += `<div class="ex" onclick="document.getElementById('input').value='${esc(ex.text)}';validate()">
+    <div class="verse">${esc(ex.text)}</div>
+    <div class="ref"><span class="where">${ex.ref}</span><span class="try">${ex.hint}</span></div></div>`;
+});
+
+// Init
+document.getElementById('input').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') validate();
+});
+$('#hist-btn').addEventListener('click', toggleDrawer);
+$('#scrim').addEventListener('click', closeDrawer);
+loadData().then(() => loadFromUrl());
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>

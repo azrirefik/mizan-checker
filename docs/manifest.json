@@ -1,0 +1,14 @@
+{
+  "name": "Mizan",
+  "short_name": "Mizan",
+  "description": "Validate Quranic verses, check authenticity of Arabic text against the full Quran",
+  "start_url": "/mizan-checker/index.html",
+  "scope": "/mizan-checker/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "oklch(48% 0.09 172)",
+  "icons": [
+    { "src": "icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

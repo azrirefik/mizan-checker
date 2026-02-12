@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Test & debug
+coverage/
+smoke-test.js
+
+# Misc
+*.log
+*.tgz
+__pycache__/
+mizan-extension-*.zip

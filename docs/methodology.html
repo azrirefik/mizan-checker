@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methodology - Mīzān</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: oklch(98% 0.004 95); --surface: oklch(100% 0.002 95);
+  --fg: oklch(20% 0.018 70); --muted: oklch(48% 0.012 70);
+  --border: oklch(90% 0.006 95); --border-2: oklch(82% 0.010 80);
+  --accent: oklch(48% 0.09 172); --accent-soft: oklch(48% 0.09 172 / 10%);
+  --font-display: 'Iowan Old Style','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;
+  --font-arabic: 'Scheherazade New','Amiri',serif;
+  --font-mono: ui-monospace,'JetBrains Mono',Menlo,monospace;
+  --maxw: 1120px; --r: 4px; --r-lg: 6px; --read: 68ch;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.15;letter-spacing:-0.01em;margin:0}
+p{margin:0 0 1em}
+a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+
+.site{border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20}
+.site-inner{max-width:var(--maxw);margin:0 auto;padding:14px clamp(16px,4vw,32px);display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--fg)}
+.brand-mark{width:26px;height:26px;flex:0 0 auto;color:var(--accent)}
+.brand-name{font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-0.01em}
+.brand-name .ar{font-family:var(--font-arabic);font-size:23px;color:var(--muted);margin-left:7px;font-weight:400}
+.nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.nav a{color:var(--muted);font-size:14px;padding:8px 12px;border-radius:var(--r);text-decoration:none}
+.nav a:hover{color:var(--fg);background:var(--accent-soft)}
+.nav a.active{color:var(--fg)}
+
+.page{max-width:760px;margin:0 auto;padding:clamp(40px,7vw,72px) clamp(16px,4vw,32px) 24px}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--accent)}
+.page h1{font-size:clamp(30px,5vw,44px);letter-spacing:-0.02em;margin-bottom:14px}
+.lede{font-size:clamp(16px,1.8vw,19px);color:var(--muted);max-width:54ch;margin-bottom:clamp(32px,5vw,48px)}
+
+section{margin-bottom:clamp(32px,5vw,48px)}
+section h2{font-size:clamp(22px,3vw,28px);margin-bottom:14px;padding-top:8px;border-top:1px solid var(--border);padding-top:22px}
+section p{color:var(--fg)}
+section p + p{margin-top:1em}
+
+.steps{display:grid;gap:14px;counter-reset:step}
+.step{display:grid;grid-template-columns:36px 1fr;gap:16px;padding:20px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}
+.step .n{font-family:var(--font-display);font-size:24px;color:var(--accent);line-height:1}
+.step h3{font-size:18px;margin-bottom:6px}
+.step p{font-size:15px;color:var(--muted);margin:0}
+
+.callout{border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;background:var(--surface);margin:8px 0}
+.callout .k{font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.callout p{margin:0;color:var(--muted);font-size:15px}
+
+.ar{font-family:var(--font-arabic);direction:rtl;text-align:right;font-size:22px;color:var(--fg)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.vs .col{border:1px solid var(--border);border-radius:var(--r);padding:16px;background:var(--bg)}
+.vs .lab{font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.vs .txt{font-family:var(--font-arabic);font-size:24px;line-height:1.8;direction:rtl;text-align:right}
+.vs .note{font-size:13px;color:var(--muted);margin-top:10px}
+@media (max-width:560px){ .vs{grid-template-columns:1fr} }
+
+ul.refs{list-style:none;padding:0;margin:0}
+ul.refs li{padding:14px 0;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+ul.refs li:last-child{border-bottom:1px solid var(--border)}
+ul.refs .t{font-family:var(--font-display);font-size:17px}
+ul.refs .d{font-size:14px;color:var(--muted)}
+ul.refs a{font-family:var(--font-mono);font-size:12px}
+
+.disclaimer{border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;background:var(--surface);margin-top:8px}
+.disclaimer h2{border:0;padding:0;margin-bottom:12px}
+.disclaimer p{color:var(--muted);font-size:15px}
+
+.foot{max-width:var(--maxw);margin:48px auto 0;padding:28px clamp(16px,4vw,32px);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.foot a{color:var(--muted)} .foot a:hover{color:var(--fg)}
+.foot .sep{color:var(--border-2)}
+.foot .right{margin-left:auto;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em}
+.cta{margin-top:8px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;padding:11px 18px;border-radius:var(--r);border:1px solid var(--accent);color:var(--accent);background:transparent}
+.btn:hover{background:var(--accent-soft);text-decoration:none}
+@media (max-width:420px){ .brand-name .ar{display:none} }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <a class="brand" href="index.html">
+      <svg class="brand-mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="3"/>
+        <rect x="18" y="18" width="64" height="64" rx="2" stroke="currentColor" stroke-width="3" transform="rotate(45 50 50)"/>
+      </svg>
+      <span class="brand-name">Mīzān<span class="ar">ميزان</span></span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">Validator</a>
+      <a class="active" href="methodology.html">Methodology</a>
+      <a href="about.html">About</a>
+    </nav>
+  </div>
+</header>
+
+<article class="page">
+  <div class="eyebrow">Methodology</div>
+  <h1>How Mīzān checks a verse.</h1>
+  <p class="lede">A plain explanation of what happens between pasting Arabic text and seeing a verdict, what the tool can and cannot say, and the text it compares against.</p>
+
+  <section>
+    <h2>The four steps</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><h3>Normalise the input</h3><p>Diacritics (tashkīl), tatweel, and common spelling variants are stripped so that <span class="ar" style="display:inline">بِسْمِ</span> and <span class="ar" style="display:inline">بسم</span> compare as the same word. Alef, yā, and hamza forms are unified.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>Match against the Uthmani text</h3><p>The normalised input is compared, word-sequence and all, to the authentic Uthmani corpus. An exact match returns the surah, ayah, and the canonical spelling.</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Restore spelling if needed</h3><p>If the input matches only in simplified form, Mīzān shows the entered text beside the correct Uthmani form so the difference is visible word by word.</p></div></div>
+      <div class="step"><div class="n">4</div><div><h3>Analyse word by word</h3><p>When no full match is found, each word is checked individually. Qur&rsquo;anic words in the wrong sequence are distinguished from words that appear nowhere in the text, the signature of fabrication.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Uthmani vs simplified spelling</h2>
+    <p>Arabic is written with and without diacritics. The Qur&rsquo;an is canonically preserved in the <em>Uthmani</em> orthography, which records specific recitation rules through diacritics and special letter forms. Everyday writing and many online quotes use a <em>simplified</em> orthography; no diacritics, ordinary letters.</p>
+    <div class="vs">
+      <div class="col">
+        <div class="lab">Simplified (as often typed)</div>
+        <div class="txt">بسم الله الرحمن الرحيم</div>
+        <div class="note">Same words, no diacritics.</div>
+      </div>
+      <div class="col">
+        <div class="lab">Uthmani (canonical)</div>
+        <div class="txt">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div class="note">Diacritics and the raised alef mark recitation.</div>
+      </div>
+    </div>
+    <div class="callout"><div class="k">Why it matters</div><p>A verse can be <em>authentic</em> yet entered in simplified spelling. Mīzān flags this as &ldquo;authentic (spelling restored)&rdquo; rather than invalid, so a correct quote is not mistaken for a fabricated one.</p></div>
+  </section>
+
+  <section>
+    <h2>Data sources</h2>
+    <ul class="refs">
+      <li><span class="t">Tanzil: Uthmani Quran text</span><span class="d">Canonical Uthmani orthography with full diacritics, the reference text used for matching.</span><a href="https://tanzil.net" target="_blank" rel="noopener">tanzil.net ↗</a></li>
+      <li><span class="t">Surah &amp; ayah metadata</span><span class="d">Surah names (Arabic and transliterated), verse counts, and reference numbering.</span></li>
+    </ul>
+  </section>
+
+  <section class="disclaimer">
+    <h2>What Mīzān is not</h2>
+    <p>Mīzān is a verification aid, not a fatwa or a religious ruling. It compares text against a digitised corpus; it does not judge recitation, translation, meaning, or context. A &ldquo;not found&rdquo; result means the passage is not present in the checked text; it is not a statement about the user&rsquo;s intent. For matters of faith or law, consult a qualified scholar.</p>
+    <p style="margin-top:12px">The production validator loads a pre-indexed Tanzil Uthmani JSON (2.5&nbsp;MB, 6,236 verses) on first visit and caches it for subsequent checks. All validation runs locally, no text leaves your device.</p>
+    <div class="cta"><a class="btn" href="index.html">← Back to the validator</a></div>
+  </section>
+</article>
+
+<footer class="foot">
+  <span>Mīzān, a Qur&rsquo;an text validation tool.</span>
+  <span class="sep">·</span>
+  <a href="index.html">Validator</a>
+  <a href="about.html">About &amp; data sources</a>
+  <span class="right">Uthmani text · Tanzil</span>
+</footer>
+
+</body>
+</html>

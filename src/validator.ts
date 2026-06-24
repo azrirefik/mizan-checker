@@ -33,12 +33,14 @@ function verseLookupKey(text: string): string {
     s = s.replace(/[\u200c\u200d\u200e\u200f\u061c]/g, '');
     s = s.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
     s = s.replace(/[أإآٱ]/g, 'ا');
+    s = s.replace(/ءا/g, 'ا');
     s = s.replace(/ى/g, 'ي');
     s = s.replace(/ة/g, 'ه');
     s = s.replace(/ؤ/g, 'و');
     s = s.replace(/ئ/g, 'ي');
     s = s.replace(/[\u0640\u06E5\u06E6]/g, '');
     s = s.replace(/\s+/g, ' ').trim();
+    s = s.replace(/^يا ايها/, 'يايها');
     return s;
 }
 

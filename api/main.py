@@ -27,12 +27,14 @@ def norm_key(text: str) -> str:
     s = re.sub(r"[\u200c\u200d\u200e\u200f\u061c]", "", s)
     s = re.sub(r"[\u064B-\u065F\u0670\u06D6-\u06ED]", "", s)
     s = re.sub(r"[أإآٱ]", "ا", s)
+    s = re.sub(r"ءا", "ا", s)  # ponytail: hamza+alef in Quranic "ءامنوا" collapses to "ا"
     s = re.sub(r"[ى]", "ي", s)
     s = re.sub(r"[ة]", "ه", s)
     s = re.sub(r"[ؤ]", "و", s)
     s = re.sub(r"[ئ]", "ي", s)
     s = re.sub(r"[\u0640\u06E5\u06E6]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
+    s = re.sub(r"^يا ايها", "يايها", s)  # ponytail: vocative join, add more if reported
     return s
 
 def exact_key(text: str) -> str:

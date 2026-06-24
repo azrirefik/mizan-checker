@@ -374,20 +374,22 @@ function validate() {
 }
 
 function findPartialMatches(trimmedKey, limit = 3) {
-  if (!trimmedKey || trimmedKey.length < 2) return { refs: [], total: 0, firstVerse: null };
+  if (!trimmedKey || trimmedKey.length < 2) return { refs: [], total: 0, verses: [] };
   const noSpace = trimmedKey.replace(/ /g, '');
   const refs = [];
+  const verses = [];
   let total = 0;
-  let firstVerse = null;
   for (const [v, verseKey] of verseKeys) {
     const verseNoSpace = verseKey.replace(/ /g, '');
     if (verseKey.includes(trimmedKey) || verseNoSpace.includes(noSpace)) {
       total++;
-      if (refs.length < limit) refs.push(`${v.surah}:${v.ayah}`);
-      if (!firstVerse) firstVerse = v;
+      if (refs.length < limit) {
+        refs.push(`${v.surah}:${v.ayah}`);
+        verses.push(v);
+      }
     }
   }
-  return { refs, total, firstVerse };
+  return { refs, total, verses };
 }
 
 function findMultiVerseMatch(trimmedKey) {
@@ -471,15 +473,30 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   const ref = `${verse.surah}:${verse.ayah}`;
   const surahEn = surah ? surah.englishName : `Surah ${verse.surah}`;
   const surahAr = surah ? surah.name : '';
+  const multiMatch = allMatches.length > 1;
+  const displayText = verse.displayText || verse.text;
 
   let html = `<div class="result">`;
 
   // Status block
-  const status = isExact ? 'ok' : 'warn';
-  const title = isExact ? 'Authentic verse' : 'Authentic, spelling restored';
-  const summary = isExact
-    ? 'An exact match against the Uthmani text. This is an authentic verse of the Quran.'
-    : 'This verse is authentic. The text you entered uses simplified or variant spelling; the canonical Uthmani form is shown below.';
+  let status = isExact ? 'ok' : 'warn';
+  let title = isExact ? 'Authentic verse' : 'Authentic, spelling restored';
+  let summary = '';
+  if (isExact) {
+    if (multiMatch) {
+      title = `Authentic verse · Appears in ${allMatches.length} surahs`;
+      summary = `An exact match against the Uthmani text. This identical text appears at the beginning of ${allMatches.length} surahs.`;
+    } else {
+      summary = 'An exact match against the Uthmani text. This is an authentic verse of the Quran.';
+    }
+  } else {
+    if (multiMatch) {
+      title = `Authentic · Appears in ${allMatches.length} surahs`;
+      summary = `This verse is authentic. The text appears in ${allMatches.length} surahs; the canonical spelling (with maddah marks) is shown below for the first match.`;
+    } else {
+      summary = 'This verse is authentic. The text you entered uses simplified or variant spelling; the canonical Uthmani form is shown below.';
+    }
+  }
   html += `<div class="block"><div class="kicker">Result</div>
     <div class="status"><span class="badge ${status}"><span class="dot"></span>${title}</span><p class="summary">${summary}</p></div></div>`;
 
@@ -490,7 +507,6 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   html += `<span class="meta">ayah ${verse.ayah} · surah ${verse.surah}</span></div></div>`;
 
   // Verse block
-  const displayText = verse.displayText || verse.text;
   html += `<div class="block"><div class="kicker">Uthmani text</div>
     <div class="verse-frame"><div class="text">${esc(displayText)}<span class="end-mark" aria-hidden="true"></span></div></div></div>`;
 
@@ -498,13 +514,9 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   if (!isExact) {
     const wordsInput = input.split(/\s+/).filter(Boolean);
     const wordsCanon = displayText.split(/\s+/).filter(Boolean);
-    // Find alignment offset: where does user input start in canonical?
     let offset = 0;
     for (let i = 0; i <= wordsCanon.length - wordsInput.length; i++) {
-      if (wordsCanon[i] === wordsInput[0]) {
-        offset = i;
-        break;
-      }
+      if (wordsCanon[i] === wordsInput[0]) { offset = i; break; }
     }
     const prepended = wordsCanon.slice(0, offset);
     const aligned = wordsCanon.slice(offset, offset + wordsInput.length);
@@ -525,38 +537,66 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
     html += `</div></div>`;
   }
 
-  // Also matches
-  if (allMatches.length > 1) {
-    html += `<div class="block"><div class="kicker">Also matches</div>
-      <p style="color:var(--muted);font-size:14px">${allMatches.slice(1, 4).map(v => `${v.surah}:${v.ayah}`).join(', ')}</p></div>`;
+  // Also matches — show all refs with toggle if >3
+  if (multiMatch) {
+    html += `<div class="block"><div class="kicker">Also appears in</div>`;
+    const remaining = allMatches.slice(1);
+    const show = remaining.slice(0, 3);
+    const hidden = remaining.slice(3);
+    html += `<div class="partial-refs">${show.map(v => `${v.surah}:${v.ayah}`).join(', ')}</div>`;
+    if (hidden.length > 0) {
+      html += `<details style="margin-top:4pt"><summary style="cursor:pointer;color:var(--muted);font-size:13px">+ ${hidden.length} more</summary>
+        <div class="partial-refs" style="margin-top:4pt">${hidden.map(v => `${v.surah}:${v.ayah}`).join(', ')}</div></details>`;
+    }
+    html += `</div>`;
   }
 
-  // Share
   html += renderShare();
   html += `</div>`;
   return html;
 }
 
 function renderPartialResult(text, partial) {
+  const verses = partial.verses || [];
+  const showAll = partial.total <= 3;
+  const visible = showAll ? verses : verses.slice(0, 1);
+  const hidden = showAll ? [] : verses.slice(1);
   const refList = partial.refs.map(r => `<span class="ref-pill">${r}</span>`).join(' ');
   const moreCount = partial.total - partial.refs.length;
   const more = moreCount > 0 ? ` <span class="more">and ${moreCount} more</span>` : '';
+
   let html = `<div class="result">`;
   html += `<div class="block"><div class="kicker">Result</div>
-    <div class="status"><span class="badge warn"><span class="dot"></span>Partial match</span><p class="summary">The text you entered is a substring of ${partial.total} verse${partial.total === 1 ? '' : 's'} in the Quran. ${partial.total === 1 ? 'This is the matching verse.' : 'Showing the first below.'}</p></div></div>`;
+    <div class="status"><span class="badge warn"><span class="dot"></span>Partial match</span><p class="summary">The text you entered is a substring of ${partial.total} verse${partial.total === 1 ? '' : 's'} in the Quran. ${showAll ? (partial.total === 1 ? 'This is the matching verse.' : 'All matching verses shown below.') : 'Showing the first match below.'}</p></div></div>`;
   html += `<div class="block"><div class="kicker">Entered text</div>
     <div class="verse-frame"><div class="text">${esc(text)}</div></div></div>`;
   html += `<div class="block"><div class="kicker">Found in</div>
     <div class="partial-refs">${refList}${more}</div></div>`;
-  if (partial.firstVerse) {
-    const fv = partial.firstVerse;
-    const displayText = fv.displayText || fv.text;
-    const surah = getSurahName(fv.surah);
-    const surahEn = surah ? surah.englishName : `Surah ${fv.surah}`;
-    html += `<div class="block"><div class="kicker">Full verse</div>
-      <div class="verse-frame"><div class="text">${esc(displayText)}<span class="end-mark" aria-hidden="true"></span></div>
-      <div class="meta" style="margin-top:2pt">${surahEn} · ${fv.surah}:${fv.ayah}</div></div></div>`;
+
+  // Show visible verses
+  const matchLabel = showAll ? 'Matching verse' : 'First match';
+  for (const v of visible) {
+    const dt = v.displayText || v.text;
+    const su = getSurahName(v.surah);
+    const se = su ? su.englishName : `Surah ${v.surah}`;
+    html += `<div class="block"><div class="kicker">${matchLabel}</div>
+      <div class="verse-frame"><div class="text">${esc(dt)}<span class="end-mark" aria-hidden="true"></span></div>
+      <div class="meta" style="margin-top:2pt">${se} · ${v.surah}:${v.ayah}</div></div></div>`;
   }
+
+  // Expandable hidden verses
+  if (hidden.length > 0) {
+    html += `<details style="margin-top:4pt"><summary style="cursor:pointer;color:var(--muted);font-size:13px;font-weight:500">+ Show all ${partial.total} matching verses</summary>`;
+    for (const v of hidden) {
+      const dt = v.displayText || v.text;
+      const su = getSurahName(v.surah);
+      const se = su ? su.englishName : `Surah ${v.surah}`;
+      html += `<div class="block"><div class="verse-frame"><div class="text">${esc(dt)}<span class="end-mark" aria-hidden="true"></span></div>
+        <div class="meta" style="margin-top:2pt">${se} · ${v.surah}:${v.ayah}</div></div></div>`;
+    }
+    html += `</details>`;
+  }
+
   html += renderShare();
   html += `</div>`;
   return html;

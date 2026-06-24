@@ -42,6 +42,7 @@ export type MatchType =
     | 'normalized'  // Match after removing diacritics
     | 'partial'     // Input is a substring of one or more verses
     | 'multi_verse' // Input covers multiple consecutive verses
+    | 'muqattaat'   // Disjointed letters (al-huroof al-muqatta'at) opening surah(s)
     | 'none';       // No match found
 
 /**
@@ -89,6 +90,8 @@ export interface ValidationResult {
     multiVerse?: VerseSegment[];
     /** Words that didn't match in a multi-verse passthrough */
     unmatchedWords?: string[];
+    /** Surah numbers for muqatta'at (disjointed letters) match */
+    muqattaatSurahs?: number[];
 }
 
 /**

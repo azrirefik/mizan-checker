@@ -100,9 +100,28 @@ class VerseSegment(BaseModel):
     ayah: int
     matched_text: str
 
+# ponytail: hardcoded muqatta'at, 14 known combinations across 29 surahs
+MUQATTAAT = {
+    "ص": [38],
+    "ق": [50],
+    "ن": [68],
+    "طه": [20],
+    "طس": [27],
+    "يس": [36],
+    "حم": [40, 41, 42, 43, 44, 45, 46],
+    "الم": [2, 3, 29, 30, 31, 32],
+    "الر": [10, 11, 12, 14, 15],
+    "طسم": [26, 28],
+    "المص": [7],
+    "المر": [13],
+    "كهيعص": [19],
+    "حم عسق": [42],
+}
+
+
 class ValidationResult(BaseModel):
     is_valid: bool
-    match_type: str  # "exact" | "normalized" | "partial" | "multi_verse" | "none"
+    match_type: str  # "exact" | "normalized" | "partial" | "multi_verse" | "muqattaat" | "none"
     reference: str | None = None
     matched_text: str | None = None
     corrected_text: str | None = None
@@ -114,6 +133,7 @@ class ValidationResult(BaseModel):
     partial_count: int | None = None
     multi_verse: list[VerseSegment] | None = None
     unmatched_words: list[str] | None = None
+    muqattaat_surahs: list[int] | None = None
 
 # ── Logic ──
 def analyze_fabrication(text: str) -> tuple[list[WordAnalysis], FabricationResult]:
@@ -227,6 +247,22 @@ def validate_text(text: str) -> ValidationResult:
         return ValidationResult(is_valid=False, match_type="none")
 
     key = norm_key(trimmed)
+
+    # ponytail: muqatta'at detection, finite known set of 14 combinations
+    muq_surahs = MUQATTAAT.get(key)
+    if muq_surahs:
+        ref = f"{muq_surahs[0]}:1"
+        first_v = next((v for v in verses if v["surah"] == muq_surahs[0] and v["ayah"] == 1), None)
+        matched = first_v.get("displayText", first_v["text"]) if first_v else trimmed
+        return ValidationResult(
+            is_valid=True,
+            match_type="muqattaat",
+            reference=ref,
+            matched_text=matched,
+            normalized_input=key,
+            muqattaat_surahs=muq_surahs,
+        )
+
     matches = verse_map.get(key)
 
     if matches and len(matches) > 0:

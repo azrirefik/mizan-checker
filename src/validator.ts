@@ -70,6 +70,24 @@ const DEFAULT_OPTIONS: Required<ValidatorOptions> = {
     minDetectionLength: 10,
 };
 
+// ponytail: hardcoded muqatta'at, 14 known combinations across 29 surahs
+const MUQATTAAT: Record<string, number[]> = {
+    "\u0635": [38],
+    "\u0642": [50],
+    "\u0646": [68],
+    "\u0637\u0647": [20],
+    "\u0637\u0633": [27],
+    "\u064A\u0633": [36],
+    "\u062D\u0645": [40, 41, 42, 43, 44, 45, 46],
+    "\u0627\u0644\u0645": [2, 3, 29, 30, 31, 32],
+    "\u0627\u0644\u0631": [10, 11, 12, 14, 15],
+    "\u0637\u0633\u0645": [26, 28],
+    "\u0627\u0644\u0645\u0635": [7],
+    "\u0627\u0644\u0645\u0631": [13],
+    "\u0643\u0647\u064A\u0639\u0635": [19],
+    "\u062D\u0645 \u0639\u0633\u0642": [42],
+};
+
 interface QuranVerseWithDisplay extends QuranVerse {
     displayText?: string;
 }
@@ -194,6 +212,20 @@ export class QuranValidator {
         const exactMatch = this.findExactMatch(trimmedText);
         if (exactMatch) {
             return this.createResult(exactMatch, 'exact', normalizedInput);
+        }
+
+        // Step 1b: ponytail: muqatta'at detection, finite known set of 14 combinations
+        const muqSurahs = MUQATTAAT[lookupKey];
+        if (muqSurahs) {
+            const firstV = this.versesData.find(v => v.surah === muqSurahs[0] && v.ayah === 1);
+            return {
+                isValid: true,
+                matchType: 'muqattaat',
+                normalizedInput,
+                reference: `${muqSurahs[0]}:1`,
+                matchedVerse: firstV,
+                muqattaatSurahs: muqSurahs,
+            };
         }
 
         // Step 2: Try normalized match (handles script variations)

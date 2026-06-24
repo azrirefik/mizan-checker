@@ -333,6 +333,24 @@ function exactKey(text) {
   return s;
 }
 
+// ponytail: hardcoded muqatta'at, 14 known combinations across 29 surahs
+const MUQATTAAT = {
+  "\u0635": [38],
+  "\u0642": [50],
+  "\u0646": [68],
+  "\u0637\u0647": [20],
+  "\u0637\u0633": [27],
+  "\u064A\u0633": [36],
+  "\u062D\u0645": [40,41,42,43,44,45,46],
+  "\u0627\u0644\u0645": [2,3,29,30,31,32],
+  "\u0627\u0644\u0631": [10,11,12,14,15],
+  "\u0637\u0633\u0645": [26,28],
+  "\u0627\u0644\u0645\u0635": [7],
+  "\u0627\u0644\u0645\u0631": [13],
+  "\u0643\u0647\u064A\u0639\u0635": [19],
+  "\u062D\u0645 \u0639\u0633\u0642": [42],
+};
+
 async function loadData() {
   if (verseMap) return;
   if (loading) return;
@@ -476,6 +494,14 @@ function renderSingle(text) {
     return;
   }
   const key = normKey(trimmed);
+
+  // ponytail: muqatta'at detection, finite known set of 14 combinations
+  const muqSuras = MUQATTAAT[key];
+  if (muqSuras) {
+    document.getElementById('results').innerHTML = renderMuqattaatResult(trimmed, key, muqSuras);
+    return;
+  }
+
   const matches = verseMap.get(key);
 
   if (matches && matches.length > 0) {
@@ -604,6 +630,68 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
 
   html += renderShare();
   html += `</div>`;
+  return html;
+}
+
+function renderMuqattaatResult(input, key, surahs) {
+  const isSpecial = key === "\u062D\u0645 \u0639\u0633\u0642";
+  const firstSurah = surahs[0];
+  const firstVerse = versesData.find(v => v.surah === firstSurah && v.ayah === 1);
+  const displayText = firstVerse ? (firstVerse.displayText || firstVerse.text) : input;
+  const surah = getSurahName(firstSurah);
+  const surahEn = surah ? surah.englishName : "Surah " + firstSurah;
+  const surahAr = surah ? surah.name : "";
+
+  let title, summary;
+  if (isSpecial) {
+    title = "Muqatta'at (disjointed letters)";
+    summary = "These disjointed letters open Surah 42 (Ash-Shura). \u1E25\u0101-m\u012Bm appears in 42:1, \u02BFayn-s\u012Bn-q\u0101f in 42:2.";
+  } else if (surahs.length === 1) {
+    title = "Muqatta'at (disjointed letters)";
+    summary = "These disjointed letters open Surah " + firstSurah + " (" + surahEn + ").";
+  } else {
+    title = "Muqatta'at \u00B7 Opens " + surahs.length + " surahs";
+    summary = "These disjointed letters (al-\u1E25uroof al-muqatta\u02BF\u0101t) open " + surahs.length + " surahs.";
+  }
+
+  let html = '<div class="result">';
+
+  html += '<div class="block"><div class="kicker">Result</div>';
+  html += '<div class="status"><span class="badge ok"><span class="dot"></span>' + title + '</span><p class="summary">' + summary + '</p></div></div>';
+
+  const ref = isSpecial ? "42:1-2" : firstSurah + ":1";
+  html += '<div class="block"><div class="kicker">Reference</div>';
+  html += '<div class="reference"><span class="where">' + surahEn + ' <span class="num">' + ref + '</span></span>';
+  if (surahAr) html += '<span class="surah-ar">' + surahAr + '</span>';
+  html += '<span class="meta">ayah 1 \u00B7 surah ' + firstSurah + '</span></div></div>';
+
+  html += '<div class="block"><div class="kicker">Verse text</div>';
+  html += '<div class="verse-frame"><div class="text">' + esc(displayText) + '<span class="end-mark" aria-hidden="true"></span></div></div></div>';
+
+  if (isSpecial) {
+    const v2 = versesData.find(function(v2) { return v2.surah === 42 && v2.ayah === 2; });
+    if (v2) {
+      const dv2 = v2.displayText || v2.text;
+      html += '<div class="block"><div class="kicker">Verse 2</div>';
+      html += '<div class="verse-frame"><div class="text">' + esc(dv2) + '<span class="end-mark" aria-hidden="true"></span></div></div></div>';
+    }
+  }
+
+  if (surahs.length > 1 && !isSpecial) {
+    html += '<div class="block"><div class="kicker">Also opens</div>';
+    var others = surahs.slice(1);
+    var showOthers = others.slice(0, 5);
+    var hiddenOthers = others.slice(5);
+    html += '<div class="partial-refs">Surahs ' + showOthers.join(", ") + '</div>';
+    if (hiddenOthers.length > 0) {
+      html += '<details style="margin-top:4pt"><summary style="cursor:pointer;color:var(--muted);font-size:13px">+ ' + hiddenOthers.length + ' more</summary>';
+      html += '<div class="partial-refs" style="margin-top:4pt">Surahs ' + hiddenOthers.join(", ") + '</div></details>';
+    }
+    html += '</div>';
+  }
+
+  html += renderShare();
+  html += '</div>';
   return html;
 }
 

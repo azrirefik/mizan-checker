@@ -303,7 +303,7 @@ async function loadData() {
   try {
     const [vres, sres] = await Promise.all([
       fetch('quran-verses.min.json').then(r => r.json()),
-      fetch('https://raw.githubusercontent.com/azrirefik/mizan-checker/main/data/quran-surahs.min.json').then(r => r.json()).catch(() => null)
+      fetch('quran-surahs.min.json').then(r => r.json()).catch(() => null)
     ]);
     versesData = vres;
     surahData = sres;

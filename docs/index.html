@@ -27,6 +27,18 @@
   --font-mono: ui-monospace,'JetBrains Mono',Menlo,monospace;
   --maxw: 1120px; --r: 4px; --r-lg: 6px;
 }
+
+[data-theme="dark"]{
+  --bg: oklch(18% 0.008 85); --surface: oklch(22% 0.008 85);
+  --fg: oklch(92% 0.006 85); --muted: oklch(62% 0.010 85);
+  --border: oklch(28% 0.008 85); --border-2: oklch(38% 0.010 80);
+  --accent: oklch(62% 0.08 172); --accent-fg: oklch(12% 0.005 95);
+  --accent-soft: oklch(62% 0.08 172 / 12%);
+  --ok: oklch(62% 0.09 152); --ok-soft: oklch(62% 0.09 152 / 12%);
+  --warn: oklch(68% 0.08 70); --warn-soft: oklch(68% 0.08 70 / 12%);
+  --danger: oklch(58% 0.11 28); --danger-soft: oklch(58% 0.11 28 / 10%);
+}
+
 *,*::before,*::after{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.15;letter-spacing:-0.01em;margin:0}
@@ -197,9 +209,13 @@ textarea#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accen
     <a class="active" href="index.html">Validator</a>
     <a href="methodology.html">Methodology</a>
     <a href="about.html">About</a>
-    <button class="icon-btn" id="hist-btn" aria-label="Recent checks" title="Recent checks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
-    </button>
+      <button class="icon-btn" id="hist-btn" aria-label="Recent checks" title="Recent checks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+      </button>
+      <button class="icon-btn" id="theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg id="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        <svg id="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
   </nav>
 </div>
 </header>
@@ -269,6 +285,26 @@ textarea#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accen
 <div class="toast" id="toast" role="status"></div>
 
 <script>
+(function(){
+  const html = document.documentElement;
+  const stored = localStorage.getItem('mizan-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (stored === 'dark' || (!stored && prefersDark)) {
+    html.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-sun').style.display = 'none';
+    document.getElementById('theme-moon').style.display = '';
+  }
+  document.getElementById('theme-btn').addEventListener('click', function(){
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    html.setAttribute('data-theme', next || '');
+    if (!next) html.removeAttribute('data-theme');
+    localStorage.setItem('mizan-theme', next);
+    document.getElementById('theme-sun').style.display = isDark ? '' : 'none';
+    document.getElementById('theme-moon').style.display = isDark ? 'none' : '';
+  });
+})();
+
 let verseMap = null, versesData = null, corpus = null, surahData = null, verseKeys = null, loading = false;
 
 function normKey(text) {
@@ -537,7 +573,7 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
     html += `</div></div>`;
   }
 
-  // Also matches — show all refs with toggle if >3
+  // Also matches, show all refs with toggle if >3
   if (multiMatch) {
     html += `<div class="block"><div class="kicker">Also appears in</div>`;
     const remaining = allMatches.slice(1);

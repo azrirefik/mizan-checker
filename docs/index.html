@@ -374,18 +374,20 @@ function validate() {
 }
 
 function findPartialMatches(trimmedKey, limit = 3) {
-  if (!trimmedKey || trimmedKey.length < 2) return { refs: [], total: 0 };
+  if (!trimmedKey || trimmedKey.length < 2) return { refs: [], total: 0, firstVerse: null };
   const noSpace = trimmedKey.replace(/ /g, '');
   const refs = [];
   let total = 0;
+  let firstVerse = null;
   for (const [v, verseKey] of verseKeys) {
     const verseNoSpace = verseKey.replace(/ /g, '');
     if (verseKey.includes(trimmedKey) || verseNoSpace.includes(noSpace)) {
       total++;
       if (refs.length < limit) refs.push(`${v.surah}:${v.ayah}`);
+      if (!firstVerse) firstVerse = v;
     }
   }
-  return { refs, total };
+  return { refs, total, firstVerse };
 }
 
 function findMultiVerseMatch(trimmedKey) {
@@ -541,11 +543,20 @@ function renderPartialResult(text, partial) {
   const more = moreCount > 0 ? ` <span class="more">and ${moreCount} more</span>` : '';
   let html = `<div class="result">`;
   html += `<div class="block"><div class="kicker">Result</div>
-    <div class="status"><span class="badge warn"><span class="dot"></span>Partial match</span><p class="summary">The text you entered is a substring of ${partial.total} verse${partial.total === 1 ? '' : 's'} in the Quran. ${partial.total === 1 ? 'This is the matching verse.' : 'Showing the first few below.'}</p></div></div>`;
+    <div class="status"><span class="badge warn"><span class="dot"></span>Partial match</span><p class="summary">The text you entered is a substring of ${partial.total} verse${partial.total === 1 ? '' : 's'} in the Quran. ${partial.total === 1 ? 'This is the matching verse.' : 'Showing the first below.'}</p></div></div>`;
   html += `<div class="block"><div class="kicker">Entered text</div>
     <div class="verse-frame"><div class="text">${esc(text)}</div></div></div>`;
   html += `<div class="block"><div class="kicker">Found in</div>
     <div class="partial-refs">${refList}${more}</div></div>`;
+  if (partial.firstVerse) {
+    const fv = partial.firstVerse;
+    const displayText = fv.displayText || fv.text;
+    const surah = getSurahName(fv.surah);
+    const surahEn = surah ? surah.englishName : `Surah ${fv.surah}`;
+    html += `<div class="block"><div class="kicker">Full verse</div>
+      <div class="verse-frame"><div class="text">${esc(displayText)}<span class="end-mark" aria-hidden="true"></span></div>
+      <div class="meta" style="margin-top:2pt">${surahEn} · ${fv.surah}:${fv.ayah}</div></div></div>`;
+  }
   html += renderShare();
   html += `</div>`;
   return html;

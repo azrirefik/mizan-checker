@@ -514,6 +514,9 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   const multiMatch = allMatches.length > 1;
   const displayText = verse.displayText || verse.text;
 
+  const uniqueSurahs = multiMatch ? new Set(allMatches.map(v => v.surah)).size : 1;
+  const sameSurah = multiMatch && uniqueSurahs === 1;
+
   let html = `<div class="result">`;
 
   // Status block
@@ -522,15 +525,25 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   let summary = '';
   if (isExact) {
     if (multiMatch) {
-      title = `Authentic verse · Appears in ${allMatches.length} surahs`;
-      summary = `An exact match against the Uthmani text. This identical text appears at the beginning of ${allMatches.length} surahs.`;
+      if (sameSurah) {
+        title = `Authentic verse · Appears ${allMatches.length} times`;
+        summary = `An exact match against the Uthmani text. This refrain appears ${allMatches.length} times in Surah ${surahEn}.`;
+      } else {
+        title = `Authentic verse · Appears in ${uniqueSurahs} surahs`;
+        summary = `An exact match against the Uthmani text. This identical text appears in ${uniqueSurahs} surahs.`;
+      }
     } else {
       summary = 'An exact match against the Uthmani text. This is an authentic verse of the Quran.';
     }
   } else {
     if (multiMatch) {
-      title = `Authentic · Appears in ${allMatches.length} surahs`;
-      summary = `This verse is authentic. The text appears in ${allMatches.length} surahs; the canonical spelling (with maddah marks) is shown below for the first match.`;
+      if (sameSurah) {
+        title = `Authentic · Appears ${allMatches.length} times`;
+        summary = `This verse is authentic. The refrain appears ${allMatches.length} times in Surah ${surahEn}; the canonical spelling is shown below for the first match.`;
+      } else {
+        title = `Authentic · Appears in ${uniqueSurahs} surahs`;
+        summary = `This verse is authentic. The text appears in ${uniqueSurahs} surahs; the canonical spelling is shown below for the first match.`;
+      }
     } else {
       summary = 'This verse is authentic. The text you entered uses simplified or variant spelling; the canonical Uthmani form is shown below.';
     }

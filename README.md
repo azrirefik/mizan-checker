@@ -14,9 +14,9 @@ Turns out the fix is a normalization pipeline and a lookup table. Strip diacriti
 ## How it actually works
 
 ```
-Input: "بسم الله الرحمان الرحيم" (common simplified spelling)
+Input: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" (with diacritics)
   |
-  v  NFKC + strip bidi markers + remove diacritics + normalize variants
+  v  NFKD + strip bidi markers + remove diacritics + normalize variants
   |
 "بسم الله الرحمن الرحيم"
   |
@@ -29,7 +29,7 @@ Match: 1:1 (Al-Fatiha)
 "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
 ```
 
-The normalization handles: alef variants (ا/أ/إ/آ/ٱ), yeh/alef maqsura (ي/ى), ta marbuta/heh (ة/ه), hamza carriers, tatweel, and small letters. Basmala is pre-stripped from verse 1 of each surah (except Al-Fatiha) so lookups work regardless of whether the input includes it.
+The normalization handles: alef variants (ا/أ/إ/آ/ٱ), yeh/alef maqsura (ي/ى), ta marbuta/heh (ة/ه), hamza carriers, tatweel, and small letters. Basmala is pre-stripped from verse 1 of each surah (except Al-Fatiha where verse 1 IS the Basmala, and At-Tawbah which has no Basmala) so lookups work regardless of whether the input includes it.
 
 If a verse doesn't match at all, fabrication analysis kicks in: greedy longest-contiguous-match against the full Quran corpus to show exactly which words are real and which are invented.
 

@@ -224,6 +224,7 @@ export class QuranValidator {
                 normalizedInput,
                 reference: `${muqSurahs[0]}:1`,
                 matchedVerse: firstV,
+                translation: firstV?.translation,
                 muqattaatSurahs: muqSurahs,
             };
         }
@@ -699,6 +700,7 @@ export class QuranValidator {
             matchType,
             matchedVerse: verse,
             reference: `${verse.surah}:${verse.ayah}`,
+            translation: verse.translation,
             normalizedInput,
         };
     }

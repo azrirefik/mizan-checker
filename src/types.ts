@@ -16,6 +16,8 @@ export interface QuranVerse {
     page: number;
     /** Juz (part) number (1-30) */
     juz: number;
+    /** English translation (Sahih International) */
+    translation?: string;
 }
 
 /**
@@ -57,6 +59,8 @@ export interface VerseSegment {
     ayah: number;
     /** Display text of the matched verse */
     matchedText: string;
+    /** English translation (Sahih International) */
+    translation?: string;
 }
 
 /**
@@ -71,6 +75,8 @@ export interface ValidationResult {
     matchedVerse?: QuranVerse;
     /** Reference string like "2:255" */
     reference?: string;
+    /** English translation (Sahih International) */
+    translation?: string;
     /** The normalized (stripped) input text that was checked */
     normalizedInput?: string;
     /** The expected normalized verse text (for comparison when invalid) */

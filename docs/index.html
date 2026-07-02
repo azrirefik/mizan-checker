@@ -123,6 +123,7 @@ textarea#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accen
 .verse-frame{direction:rtl;text-align:center;border:1px solid var(--border);border-radius:var(--r);padding:clamp(22px,3.4vw,34px) clamp(18px,3vw,28px);background:var(--bg);position:relative}
 .verse-frame .text{font-family:var(--font-arabic);font-size:clamp(26px,3.6vw,34px);line-height:2;color:var(--fg);font-weight:400}
 .verse-frame .end-mark{display:inline-block;width:10px;height:10px;border:1px solid var(--accent);transform:rotate(45deg);margin:0 6px;vertical-align:middle;opacity:.7}
+.verse-frame .text.translation{font-family:var(--font);font-size:clamp(15px,2vw,18px);line-height:1.7;text-align:left;direction:ltr;color:var(--muted)}
 
 .corr{display:grid;gap:14px}
 .corr-prepended{font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;color:var(--muted);padding:8px 12px;background:var(--bg);border-left:2px solid var(--accent);border-radius:var(--r)}
@@ -587,6 +588,12 @@ function renderMatchResult(verse, input, isExact, surah, allMatches) {
   html += `<div class="block"><div class="kicker">Uthmani text</div>
     <div class="verse-frame"><div class="text">${esc(displayText)}<span class="end-mark" aria-hidden="true"></span></div></div></div>`;
 
+  // Translation (Sahih International)
+  if (verse.translation) {
+    html += `<div class="block"><div class="kicker">Translation (Sahih International)</div>
+      <div class="verse-frame"><div class="text translation">${esc(verse.translation)}</div></div></div>`;
+  }
+
   // Corrections
   if (!isExact) {
     const wordsInput = input.split(/\s+/).filter(Boolean);
@@ -668,12 +675,21 @@ function renderMuqattaatResult(input, key, surahs) {
   html += '<div class="block"><div class="kicker">Verse text</div>';
   html += '<div class="verse-frame"><div class="text">' + esc(displayText) + '<span class="end-mark" aria-hidden="true"></span></div></div></div>';
 
+  if (firstVerse && firstVerse.translation) {
+    html += '<div class="block"><div class="kicker">Translation (Sahih International)</div>';
+    html += '<div class="verse-frame"><div class="text translation">' + esc(firstVerse.translation) + '</div></div></div>';
+  }
+
   if (isSpecial) {
     const v2 = versesData.find(function(v2) { return v2.surah === 42 && v2.ayah === 2; });
     if (v2) {
       const dv2 = v2.displayText || v2.text;
       html += '<div class="block"><div class="kicker">Verse 2</div>';
       html += '<div class="verse-frame"><div class="text">' + esc(dv2) + '<span class="end-mark" aria-hidden="true"></span></div></div></div>';
+      if (v2.translation) {
+        html += '<div class="block"><div class="kicker">Verse 2 translation</div>';
+        html += '<div class="verse-frame"><div class="text translation">' + esc(v2.translation) + '</div></div></div>';
+      }
     }
   }
 
@@ -721,6 +737,10 @@ function renderPartialResult(text, partial) {
     html += `<div class="block"><div class="kicker">${matchLabel}</div>
       <div class="verse-frame"><div class="text">${esc(dt)}<span class="end-mark" aria-hidden="true"></span></div>
       <div class="meta" style="margin-top:2pt">${se} · ${v.surah}:${v.ayah}</div></div></div>`;
+    if (v.translation) {
+      html += `<div class="block"><div class="kicker">Translation</div>
+        <div class="verse-frame"><div class="text translation">${esc(v.translation)}</div></div></div>`;
+    }
   }
 
   // Expandable hidden verses

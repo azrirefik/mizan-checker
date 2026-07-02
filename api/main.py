@@ -124,6 +124,7 @@ class ValidationResult(BaseModel):
     match_type: str  # "exact" | "normalized" | "partial" | "multi_verse" | "muqattaat" | "none"
     reference: str | None = None
     matched_text: str | None = None
+    translation: str | None = None
     corrected_text: str | None = None
     normalized_input: str | None = None
     word_analysis: list[WordAnalysis] | None = None
@@ -259,6 +260,7 @@ def validate_text(text: str) -> ValidationResult:
             match_type="muqattaat",
             reference=ref,
             matched_text=matched,
+            translation=first_v.get("translation") if first_v else None,
             normalized_input=key,
             muqattaat_surahs=muq_surahs,
         )
@@ -274,6 +276,7 @@ def validate_text(text: str) -> ValidationResult:
             match_type="exact" if is_exact else "normalized",
             reference=f"{verse['surah']}:{verse['ayah']}",
             matched_text=display_text,
+            translation=verse.get("translation"),
             corrected_text=None if is_exact else display_text,
             normalized_input=key,
             suggestions=[f"{v['surah']}:{v['ayah']}" for v in matches[1:4]] if len(matches) > 1 else None,
